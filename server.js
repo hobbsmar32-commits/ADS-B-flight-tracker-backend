@@ -35,3 +35,13 @@ app.get("/api/flight/:flight", async (req, res) => {
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
+
+app.get("/api/live", async (req, res) => {
+  try {
+    const response = await fetch("https://opensky-network.org/api/states/all");
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
