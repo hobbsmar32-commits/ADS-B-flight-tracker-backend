@@ -81,53 +81,29 @@ let map = L.map('map').setView([39, -95], 4);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-let marker;
+let planes = {};
 
-// LiveATC streams (basic examples)
-function setATC(dep, arr) {
-  const streams = {
-    BOS: "https://streams.liveatc.net/zbw_app_dep",
-    ATL: "https://streams.liveatc.net/atl_twr"
-  };
-
-  document.getElementById("audio").src = streams[dep] || streams[arr] || "";
-}
-
-async function track() {
-  const flight = document.getElementById("flight").value;
-
-  const res = await fetch(
-    "https://YOUR-RENDER-URL.onrender.com/api/flight/" + flight
-  );
-
+async function updateRadar() {
+  const res = await fetch("https://YOUR-RENDER-URL.onrender.com/api/live");
   const data = await res.json();
-  const f = data.data[0];
 
-  // Info
-  document.getElementById("info").innerText =
-    f.airline.name + " " + f.flight.iata;
+  data.states.forEach(p => {
+    if (!p[5] || !p[6]) return;
 
-  document.getElementById("route").innerText =
-    f.departure.iata + " → " + f.arrival.iata;
+    const id = p[1];
+    const lon = p[5];
+    const lat = p[6];
 
-  document.getElementById("status").innerText =
-    "Status: " + f.flight_status;
-
-  // Map (fake position midpoint since no live data)
-  const lat = 38.5;
-  const lon = -85;
-
-  if (marker) map.removeLayer(marker);
-  marker = L.marker([lat, lon]).addTo(map);
-  map.setView([lat, lon], 5);
-
-  // ATC
-  setATC(f.departure.iata, f.arrival.iata);
-
-  // Flightradar24 link (real tracking page)
-  document.getElementById("fr24").href =
-    "https://www.flightradar24.com/data/flights/" + f.flight.iata.toLowerCase();
+    if (!planes[id]) {
+      planes[id] = L.marker([lat, lon]).addTo(map);
+    } else {
+      planes[id].setLatLng([lat, lon]);
+    }
+  });
 }
+
+setInterval(updateRadar, 5000);
+updateRadar();
 </script>
 
 </body>
