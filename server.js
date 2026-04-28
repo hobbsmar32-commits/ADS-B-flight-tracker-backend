@@ -16,26 +16,19 @@ app.get("/test", (req, res) => {
 const PORT = process.env.PORT || 3000;
 const ADSB_KEY = process.env.ADSB_KEY;
 
-app.get("/api/flight/:callsign", async (req, res) => {
+app.get("/api/flight/:flight", async (req, res) => {
   try {
-    const callsign = req.params.callsign;
+    const flight = req.params.flight;
 
-    const response = await fetch(
-      `https://api.adsbexchange.com/v2/callsign/${callsign}`,
-      {
-        headers: {
-          "api-auth": process.env.ADSB_KEY
-        }
-      }
-    );
+    const url = `http://api.aviationstack.com/v1/flights?access_key=${process.env.AVIATION_KEY}&flight_iata=${flight}`;
 
-    const text = await response.text();
+    const response = await fetch(url);
+    const data = await response.json();
 
-    // 👇 send raw response so we can debug
-    res.send(text);
+    res.json(data);
 
   } catch (err) {
-    res.status(500).send("Error: " + err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
