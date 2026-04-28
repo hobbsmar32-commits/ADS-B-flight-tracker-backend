@@ -5,6 +5,14 @@ import cors from "cors";
 const app = express();
 app.use(cors());
 
+app.get("/", (req, res) => {
+  res.send("Backend is working ✅");
+});
+
+app.get("/test", (req, res) => {
+  res.send("Test route works ✅");
+});
+
 const PORT = process.env.PORT || 3000;
 const ADSB_KEY = process.env.ADSB_KEY;
 
