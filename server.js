@@ -24,15 +24,18 @@ app.get("/api/flight/:callsign", async (req, res) => {
       `https://api.adsbexchange.com/v2/callsign/${callsign}`,
       {
         headers: {
-          "api-auth": ADSB_KEY
+          "api-auth": process.env.ADSB_KEY
         }
       }
     );
 
-    const data = await response.json();
-    res.json(data);
+    const text = await response.text();
+
+    // 👇 send raw response so we can debug
+    res.send(text);
+
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch data" });
+    res.status(500).send("Error: " + err.message);
   }
 });
 
