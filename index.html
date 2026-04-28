@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flight Radar Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      background: #0b0f14;
+      color: #00ffcc;
+      font-family: Arial;
+    }
+
+    #map {
+      height: 55vh;
+    }
+
+    .panel {
+      padding: 15px;
+    }
+
+    input, button {
+      font-size: 18px;
+      padding: 10px;
+      margin: 5px;
+    }
+
+    button {
+      background: #00ffcc;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .card {
+      background: #111827;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 10px;
+    }
+
+    a {
+      color: #00ffcc;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<div class="panel">
+
+  <input id="flight" placeholder="DL2464">
+  <button onclick="track()">TRACK FLIGHT</button>
+
+  <div class="card">
+    <h2 id="info">Enter a flight</h2>
+    <p id="route"></p>
+    <p id="status"></p>
+  </div>
+
+  <div class="card">
+    <h3>🎧 Live ATC</h3>
+    <audio id="audio" controls></audio>
+  </div>
+
+  <div class="card">
+    <h3>🔗 External Tracking</h3>
+    <a id="fr24" target="_blank">Open in Flightradar24</a>
+  </div>
+
+</div>
+
+<script>
+let map = L.map('map').setView([39, -95], 4);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+let marker;
+
+// LiveATC streams (basic examples)
+function setATC(dep, arr) {
+  const streams = {
+    BOS: "https://streams.liveatc.net/zbw_app_dep",
+    ATL: "https://streams.liveatc.net/atl_twr"
+  };
+
+  document.getElementById("audio").src = streams[dep] || streams[arr] || "";
+}
+
+async function track() {
+  const flight = document.getElementById("flight").value;
+
+  const res = await fetch(
+    "https://YOUR-RENDER-URL.onrender.com/api/flight/" + flight
+  );
+
+  const data = await res.json();
+  const f = data.data[0];
+
+  // Info
+  document.getElementById("info").innerText =
+    f.airline.name + " " + f.flight.iata;
+
+  document.getElementById("route").innerText =
+    f.departure.iata + " → " + f.arrival.iata;
+
+  document.getElementById("status").innerText =
+    "Status: " + f.flight_status;
+
+  // Map (fake position midpoint since no live data)
+  const lat = 38.5;
+  const lon = -85;
+
+  if (marker) map.removeLayer(marker);
+  marker = L.marker([lat, lon]).addTo(map);
+  map.setView([lat, lon], 5);
+
+  // ATC
+  setATC(f.departure.iata, f.arrival.iata);
+
+  // Flightradar24 link (real tracking page)
+  document.getElementById("fr24").href =
+    "https://www.flightradar24.com/data/flights/" + f.flight.iata.toLowerCase();
+}
+</script>
+
+</body>
+</html>
